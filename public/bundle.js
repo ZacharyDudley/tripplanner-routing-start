@@ -548,13 +548,13 @@ const state = {
 };
 
 /*
-  * Instantiate the Map
-  */
+ * Instantiate the Map
+ */
 
 mapboxgl.accessToken = "pk.eyJ1IjoiemFjaGFyeWR1ZGxleSIsImEiOiJjajhkNWt6dncwbDZoMzNwNzYxaGdxMmtiIn0.x_NgOhqEwuRAakcm1knjBQ";
 
-const fullstackCoords = [-74.009, 40.705] // NY
-// const fullstackCoords = [-87.6320523, 41.8881084] // CHI
+// const fullstackCoords = [-74.009, 40.705] // NY
+const fullstackCoords = [-87.6320523, 41.8881084] // CHI
 
 const map = new mapboxgl.Map({
   container: "map",
@@ -564,12 +564,16 @@ const map = new mapboxgl.Map({
 });
 
 /*
-  * Populate the list of attractions
-  */
+ * Populate the list of attractions
+ */
 
 api.fetchAttractions().then(attractions => {
   state.attractions = attractions;
-  const { hotels, restaurants, activities } = attractions;
+  const {
+    hotels,
+    restaurants,
+    activities
+  } = attractions;
   hotels.forEach(hotel => makeOption(hotel, "hotels-choices"));
   restaurants.forEach(restaurant => makeOption(restaurant, "restaurants-choices"));
   activities.forEach(activity => makeOption(activity, "activities-choices"));
@@ -582,8 +586,8 @@ const makeOption = (attraction, selector) => {
 };
 
 /*
-  * Attach Event Listeners
-  */
+ * Attach Event Listeners
+ */
 
 // what to do when the `+` button next to a `select` is clicked
 ["hotels", "restaurants", "activities"].forEach(attractionType => {
@@ -624,14 +628,20 @@ const buildAttractionAssets = (category, attraction) => {
   const marker = buildMarker(category, attraction.place.location);
 
   // Adds the attraction to the application state
-  state.selectedAttractions.push({ id: attraction.id, category });
+  state.selectedAttractions.push({
+    id: attraction.id,
+    category
+  });
 
   //ADD TO DOM
   document.getElementById(`${category}-list`).append(itineraryItem);
   marker.addTo(map);
 
   // Animate the map
-  map.flyTo({ center: attraction.place.location, zoom: 15 });
+  map.flyTo({
+    center: attraction.place.location,
+    zoom: 15
+  });
 
   removeButton.addEventListener("click", function remove() {
     // Stop listening for the event
@@ -649,9 +659,42 @@ const buildAttractionAssets = (category, attraction) => {
     console.log(state);
 
     // Animate map to default position & zoom.
-    map.flyTo({ center: [-74.0, 40.731], zoom: 12.3 });
+    map.flyTo({
+      center: fullstackCoords,
+      zoom: 12.3
+    });
   });
 };
+
+// Identify if the URL contains a hash
+
+if (location.hash !== undefined) {
+  const hashNumber = location.hash.slice(1);
+
+  api.fetchAttractions()
+    .then(attractions => {
+      let itineraryData = attractions.itineraries.find(attraction => +attraction.id === +hashNumber)
+
+      //
+
+      function populateItinerary(category) {
+        itineraryData[category]
+          .map(attraction => {
+            return attraction.id
+          })
+          .forEach(attractionId => {
+            var attraction = attractions[category].find(attraction => +attraction.id === attractionId)
+            buildAttractionAssets(category, attraction);
+          })
+      }
+      ["hotels", "restaurants", "activities"].forEach(category => populateItinerary(category));
+    })
+    .catch()
+
+}
+
+let saveButton = document.getElementById('save-button');
+saveButton.addEventListener("click", () => console.log(state));
 
 
 /***/ }),
